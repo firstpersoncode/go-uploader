@@ -47,9 +47,10 @@ A Go-based REST API service for managing financial transaction uploads, user aut
    
    Edit `.env` with your configuration:
    ```env
-   SESSION_COOKIE_NAME=__session__
-   HOST=127.0.0.1
-   PORT=8080
+    SESSION_COOKIE_NAME=__session__
+    ALLOWED_ORIGINS=http://localhost:3000
+    HOST=127.0.0.1
+    PORT=8080
    ```
 
 4. **Run the application**
