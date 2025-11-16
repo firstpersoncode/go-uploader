@@ -9,19 +9,20 @@ import (
 	"firstpersoncode/go-uploader/internal/repositories"
 )
 
-func setupTestService() (domain.TransactionRepository, domain.TransactionService) {
+func setupTestService() (domain.TransactionRepository, domain.TransactionService, string) {
 	repo := repositories.NewTransactionRepository()
 	service := NewTransactionService(repo)
-	return repo, service
+	userID := "tester"
+	return repo, service, userID
 }
 
 func TestParseAndStoreCSV_Success(t *testing.T) {
-	repo, service := setupTestService()
+	repo, service, userID := setupTestService()
 
 	csvData := `1624507883, JOHN DOE, DEBIT, 250000, SUCCESS, restaurant
 1624608050, E-COMMERCE A, DEBIT, 150000, FAILED, clothes`
 
-	response, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	response, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -38,7 +39,7 @@ func TestParseAndStoreCSV_Success(t *testing.T) {
 }
 
 func TestParseAndStoreCSV_InvalidFormat(t *testing.T) {
-	repo, service := setupTestService()
+	repo, service, userID := setupTestService()
 	defer repo.Clear()
 
 	// CSV with only 5 fields instead of 6
@@ -52,16 +53,16 @@ func TestParseAndStoreCSV_InvalidFormat(t *testing.T) {
 		}
 	}()
 
-	service.ParseAndStoreCSV(strings.NewReader(csvData))
+	service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 }
 
 func TestParseAndStoreCSV_InvalidType(t *testing.T) {
-	repo, service := setupTestService()
+	repo, service, userID := setupTestService()
 	defer repo.Clear()
 
 	csvData := `1624507883, JOHN DOE, INVALID, 250000, SUCCESS, restaurant`
 
-	response, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	response, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 
 	if err == nil {
 		t.Fatal("Expected error for invalid type")
@@ -73,9 +74,9 @@ func TestParseAndStoreCSV_InvalidType(t *testing.T) {
 }
 
 func TestParseAndStoreCSV_EmptyFile(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(""))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(""), userID)
 
 	if err == nil {
 		t.Fatal("Expected error for empty file")
@@ -83,19 +84,19 @@ func TestParseAndStoreCSV_EmptyFile(t *testing.T) {
 }
 
 func TestCalculateBalance(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
 	csvData := `1624507883, JOHN DOE, CREDIT, 500000, SUCCESS, salary
 1624608050, E-COMMERCE A, DEBIT, 150000, SUCCESS, clothes
 1624708050, SHOP B, DEBIT, 100000, FAILED, test
 1624808050, STORE C, CREDIT, 200000, SUCCESS, refund`
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	response, err := service.CalculateBalance()
+	response, err := service.CalculateBalance(userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -115,18 +116,18 @@ func TestCalculateBalance(t *testing.T) {
 }
 
 func TestCalculateBalance_OnlySuccess(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
 	csvData := `1624507883, JOHN DOE, CREDIT, 1000000, SUCCESS, salary
 1624608050, E-COMMERCE A, DEBIT, 200000, FAILED, clothes
 1624708050, SHOP B, DEBIT, 300000, PENDING, test`
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	response, err := service.CalculateBalance()
+	response, err := service.CalculateBalance("tester")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -146,14 +147,14 @@ func TestCalculateBalance_OnlySuccess(t *testing.T) {
 }
 
 func TestGetIssues(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
 	csvData := `1624507883, JOHN DOE, DEBIT, 250000, SUCCESS, restaurant
 1624608050, E-COMMERCE A, DEBIT, 150000, FAILED, clothes
 1624708050, SHOP B, CREDIT, 500000, PENDING, refund
 1624808050, STORE C, DEBIT, 100000, SUCCESS, food`
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -161,7 +162,7 @@ func TestGetIssues(t *testing.T) {
 	pagination := dto_transaction.PaginationDTO{Page: 1, Limit: 10}
 	sorting := dto_transaction.SortingDTO{Sort: dto_transaction.SortAsc, SortBy: "timestamp"}
 
-	response, err := service.GetIssues(pagination, sorting)
+	response, err := service.GetIssues(pagination, sorting, userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -185,14 +186,14 @@ func TestGetIssues(t *testing.T) {
 }
 
 func TestGetIssues_Pagination(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
 	csvData := `1624507883, TX1, DEBIT, 100000, FAILED, test1
 1624608050, TX2, DEBIT, 200000, PENDING, test2
 1624708050, TX3, DEBIT, 300000, FAILED, test3
 1624808050, TX4, DEBIT, 400000, PENDING, test4`
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -200,7 +201,7 @@ func TestGetIssues_Pagination(t *testing.T) {
 	pagination := dto_transaction.PaginationDTO{Page: 1, Limit: 2}
 	sorting := dto_transaction.SortingDTO{Sort: dto_transaction.SortAsc, SortBy: "timestamp"}
 
-	response, err := service.GetIssues(pagination, sorting)
+	response, err := service.GetIssues(pagination, sorting, userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -215,7 +216,7 @@ func TestGetIssues_Pagination(t *testing.T) {
 	}
 
 	pagination.Page = 2
-	response, err = service.GetIssues(pagination, sorting)
+	response, err = service.GetIssues(pagination, sorting, userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -227,13 +228,13 @@ func TestGetIssues_Pagination(t *testing.T) {
 }
 
 func TestGetIssues_Sorting(t *testing.T) {
-	_, service := setupTestService()
+	_, service, userID := setupTestService()
 
 	csvData := `1624708050, C-TX, DEBIT, 300000, FAILED, test
 1624508050, A-TX, DEBIT, 100000, PENDING, test
 1624608050, B-TX, DEBIT, 200000, FAILED, test`
 
-	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData))
+	_, err := service.ParseAndStoreCSV(strings.NewReader(csvData), userID)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
@@ -241,7 +242,7 @@ func TestGetIssues_Sorting(t *testing.T) {
 	pagination := dto_transaction.PaginationDTO{Page: 1, Limit: 10}
 	sorting := dto_transaction.SortingDTO{Sort: dto_transaction.SortDesc, SortBy: "amount"}
 
-	response, err := service.GetIssues(pagination, sorting)
+	response, err := service.GetIssues(pagination, sorting, userID)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)

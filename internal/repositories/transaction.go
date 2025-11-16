@@ -50,11 +50,22 @@ func (r *transactionRepository) GetAll() []domain.Transaction {
 	return r.transactions
 }
 
-func (r *transactionRepository) GetAllIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) ([]domain.Transaction, int, error) {
+func (r *transactionRepository) GetAllByUserID(userID string) []domain.Transaction {
 	allTransactions := r.GetAll()
+	var userTransactions []domain.Transaction
+	for _, tx := range allTransactions {
+		if tx.UserID == userID {
+			userTransactions = append(userTransactions, tx)
+		}
+	}
+	return userTransactions
+}
+
+func (r *transactionRepository) GetAllIssues(userID string, pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) ([]domain.Transaction, int, error) {
+	userTransactions := r.GetAllByUserID(userID)
 	var issues []domain.Transaction
 
-	for _, tx := range allTransactions {
+	for _, tx := range userTransactions {
 		if tx.Status == domain.TransactionStatusFailed || tx.Status == domain.TransactionStatusPending {
 			issues = append(issues, tx)
 		}

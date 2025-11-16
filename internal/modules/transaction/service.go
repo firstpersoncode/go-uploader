@@ -20,7 +20,7 @@ func NewTransactionService(repo domain.TransactionRepository) domain.Transaction
 	return &transactionService{repo: repo}
 }
 
-func (s *transactionService) ParseAndStoreCSV(fileContent io.Reader) (*dto_transaction.UploadResponseDTO, error) {
+func (s *transactionService) ParseAndStoreCSV(fileContent io.Reader, userID string) (*dto_transaction.UploadResponseDTO, error) {
 	reader := csv.NewReader(fileContent)
 	reader.TrimLeadingSpace = true
 
@@ -46,6 +46,7 @@ func (s *transactionService) ParseAndStoreCSV(fileContent io.Reader) (*dto_trans
 			Amount:      amount,
 			Status:      domain.TransactionStatus(strings.ToUpper(strings.TrimSpace(record[4]))),
 			Description: strings.TrimSpace(record[5]),
+			UserID:      userID,
 		}
 
 		transactions = append(transactions, transaction)
@@ -65,8 +66,8 @@ func (s *transactionService) ParseAndStoreCSV(fileContent io.Reader) (*dto_trans
 	}, nil
 }
 
-func (s *transactionService) CalculateBalance() (*dto_transaction.BalanceResponseDTO, error) {
-	transactions := s.repo.GetAll()
+func (s *transactionService) CalculateBalance(userID string) (*dto_transaction.BalanceResponseDTO, error) {
+	transactions := s.repo.GetAllByUserID(userID)
 	var credits int64 = 0
 	var debits int64 = 0
 	var balance int64 = 0
@@ -90,8 +91,8 @@ func (s *transactionService) CalculateBalance() (*dto_transaction.BalanceRespons
 	}, nil
 }
 
-func (s *transactionService) GetIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) (*dto_transaction.IssuesResponseDTO, error) {
-	issues, total, err := s.repo.GetAllIssues(pagination, sorting)
+func (s *transactionService) GetIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO, userID string) (*dto_transaction.IssuesResponseDTO, error) {
+	issues, total, err := s.repo.GetAllIssues(userID, pagination, sorting)
 	if err != nil {
 		return nil, err
 	}

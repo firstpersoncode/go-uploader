@@ -30,19 +30,21 @@ type Transaction struct {
 	Amount      int64             `json:"amount"`
 	Status      TransactionStatus `json:"status"`
 	Description string            `json:"description"`
+	UserID      string            `json:"user_id"`
 }
 
 type TransactionRepository interface {
 	SaveAll(transactions []Transaction) error
 	GetAll() []Transaction
-	GetAllIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) ([]Transaction, int, error)
+	GetAllByUserID(userID string) []Transaction
+	GetAllIssues(userID string, pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) ([]Transaction, int, error)
 	Clear()
 }
 
 type TransactionService interface {
-	ParseAndStoreCSV(fileContent io.Reader) (*dto_transaction.UploadResponseDTO, error)
-	CalculateBalance() (*dto_transaction.BalanceResponseDTO, error)
-	GetIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO) (*dto_transaction.IssuesResponseDTO, error)
+	ParseAndStoreCSV(fileContent io.Reader, userID string) (*dto_transaction.UploadResponseDTO, error)
+	CalculateBalance(userID string) (*dto_transaction.BalanceResponseDTO, error)
+	GetIssues(pagination dto_transaction.PaginationDTO, sorting dto_transaction.SortingDTO, userID string) (*dto_transaction.IssuesResponseDTO, error)
 }
 
 type TransactionHandler interface {

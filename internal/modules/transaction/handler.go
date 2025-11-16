@@ -34,7 +34,9 @@ func (api *transactionHandler) UploadStatement(ctx *fiber.Ctx) error {
 	}
 	defer fileContent.Close()
 
-	response, err := api.service.ParseAndStoreCSV(fileContent)
+	session := ctx.Locals("session").(*domain.Session)
+
+	response, err := api.service.ParseAndStoreCSV(fileContent, session.UserID)
 	if err != nil {
 		return ctx.Status(400).JSON(dto.CreateErrorResponse(err.Error()))
 	}
@@ -43,7 +45,9 @@ func (api *transactionHandler) UploadStatement(ctx *fiber.Ctx) error {
 }
 
 func (api *transactionHandler) GetBalance(ctx *fiber.Ctx) error {
-	response, err := api.service.CalculateBalance()
+	session := ctx.Locals("session").(*domain.Session)
+
+	response, err := api.service.CalculateBalance(session.UserID)
 	if err != nil {
 		return ctx.Status(500).JSON(dto.CreateErrorResponse(err.Error()))
 	}
@@ -63,7 +67,9 @@ func (api *transactionHandler) GetIssues(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(dto.CreateErrorResponse("Invalid query parameters"))
 	}
 
-	response, err := api.service.GetIssues(pagination, sorting)
+	session := ctx.Locals("session").(*domain.Session)
+
+	response, err := api.service.GetIssues(pagination, sorting, session.UserID)
 	if err != nil {
 		return ctx.Status(500).JSON(dto.CreateErrorResponse(err.Error()))
 	}
