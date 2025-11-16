@@ -49,7 +49,7 @@ A Go-based REST API service for managing financial transaction uploads, user aut
    ```env
     SESSION_COOKIE_NAME=__session__
     ALLOWED_ORIGINS=http://localhost:3000
-    HOST=127.0.0.1
+    HOST=0.0.0.0
     PORT=8080
    ```
 
@@ -58,7 +58,7 @@ A Go-based REST API service for managing financial transaction uploads, user aut
    go run main.go
    ```
    
-   The server will start at `http://127.0.0.1:8080`
+   The server will start at `http://localhost:8080`
 
 5. **Run tests**
    ```bash
