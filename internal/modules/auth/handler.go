@@ -6,6 +6,7 @@ import (
 	"firstpersoncode/go-uploader/domain"
 	"firstpersoncode/go-uploader/dto"
 	dto_session "firstpersoncode/go-uploader/dto/session"
+	"firstpersoncode/go-uploader/internal/config"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -46,7 +47,7 @@ func (h *authHandler) SignIn(ctx *fiber.Ctx) error {
 	}
 
 	cookie := &fiber.Cookie{
-		Name:     "__session__",
+		Name:     config.Get().App.CookieName,
 		Value:    token_dto.Token,
 		Expires:  token_dto.Expiry,
 		HTTPOnly: true,
@@ -61,7 +62,7 @@ func (h *authHandler) SignIn(ctx *fiber.Ctx) error {
 
 func (h *authHandler) SignOut(ctx *fiber.Ctx) error {
 	cookie := &fiber.Cookie{
-		Name:     "__session__",
+		Name:     config.Get().App.CookieName,
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,

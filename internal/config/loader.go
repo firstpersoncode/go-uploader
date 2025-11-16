@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	App    App
 	Server Server
 }
 
@@ -18,6 +19,9 @@ func Get() *Config {
 	}
 
 	return &Config{
+		App: App{
+			CookieName: os.Getenv("SESSION_COOKIE_NAME"),
+		},
 		Server: Server{
 			Host: os.Getenv("HOST"),
 			Port: os.Getenv("PORT"),

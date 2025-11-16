@@ -3,6 +3,7 @@ package middlewares
 import (
 	"firstpersoncode/go-uploader/domain"
 	"firstpersoncode/go-uploader/dto"
+	"firstpersoncode/go-uploader/internal/config"
 	"firstpersoncode/go-uploader/internal/util"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,7 +20,7 @@ func NewSessionMiddleware(repo domain.SessionRepository) *SessionMiddleware {
 }
 
 func (s *SessionMiddleware) Handle(ctx *fiber.Ctx) error {
-	token := ctx.Cookies("__session__")
+	token := ctx.Cookies(config.Get().App.CookieName)
 	if token == "" {
 		return ctx.Status(401).JSON(dto.CreateErrorResponse("Unauthorized: No session token"))
 	}
