@@ -20,7 +20,8 @@ func Get() *Config {
 
 	return &Config{
 		App: App{
-			CookieName: os.Getenv("SESSION_COOKIE_NAME"),
+			CookieName:     os.Getenv("SESSION_COOKIE_NAME"),
+			AllowedOrigins: os.Getenv("ALLOWED_ORIGINS"),
 		},
 		Server: Server{
 			Host: os.Getenv("HOST"),

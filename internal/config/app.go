@@ -1,5 +1,6 @@
 package config
 
 type App struct {
-	CookieName string
+	CookieName     string
+	AllowedOrigins string
 }

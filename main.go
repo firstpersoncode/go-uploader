@@ -11,12 +11,19 @@ import (
 	"firstpersoncode/go-uploader/internal/repositories"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 )
 
 func main() {
 
 	app := fiber.New()
+	config := config.Get()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.App.AllowedOrigins,
+		AllowCredentials: true,
+	}))
 
 	app.Use(limiter.New(limiter.Config{
 		Max:               20,
@@ -49,10 +56,8 @@ func main() {
 	app.Get("/balance", sessionMiddleware.Handle, transactionHandler.GetBalance)
 	app.Get("/issues", sessionMiddleware.Handle, transactionHandler.GetIssues)
 
-	configServer := config.Get().Server
-
-	host := configServer.Host
-	port := configServer.Port
+	host := config.Server.Host
+	port := config.Server.Port
 
 	log.Printf("Server running on %s:%s", host, port)
 	log.Fatal(app.Listen(host + ":" + port))
